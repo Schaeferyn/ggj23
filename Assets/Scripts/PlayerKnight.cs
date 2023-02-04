@@ -1,4 +1,3 @@
-using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -10,6 +9,7 @@ public class PlayerKnight : MonoBehaviour
     private bool b_isInitialized = false;
 
     [SerializeField] Rigidbody rb_knight;
+    private Transform t_knight;
     
     [SerializeField] private Animator anim_target;
     private bool b_isGrounded = false;
@@ -23,11 +23,16 @@ public class PlayerKnight : MonoBehaviour
     private Transform t_camera;
     [SerializeField] private Transform t_camRotator;
     [SerializeField] private float f_camRotateSpeed = 60.0f;
+    [SerializeField] private Transform t_selfRotator;
+    [SerializeField] private Transform t_selfRotatorOffset;
+
+    [SerializeField] private float f_slamForce = 3000;
     
     void Initialize()
     {
         pInput = GetComponent<PlayerInput>();
         t_camera = Camera.main.transform;
+        t_knight = rb_knight.transform;
         
         b_isInitialized = true;
     }
@@ -69,10 +74,22 @@ public class PlayerKnight : MonoBehaviour
         }
     }
 
-    // void ProcessMove()
-    // {
-    //     
-    // }
+    void ProcessMove()
+    {
+        if (v_moveInput.magnitude > 0.1f)
+        {
+            Vector3 v_moveForceToAdd = (t_camera.forward * v_moveInput.y) + (t_camera.right * v_moveInput.x);
+            v_moveForceToAdd.y = 0;
+            
+            t_selfRotator.LookAt(t_selfRotator.position + v_moveForceToAdd);
+            //t_knight.localRotation = Quaternion.Slerp(t_knight.localRotation, t_selfRotatorOffset.localRotation, 0.1f);
+            // t_knight.rotation = t_selfRotatorOffset.rotation;
+
+            // Vector3 v_euls = t_knight.eulerAngles;
+            // v_euls.y = t_selfRotatorOffset.eulerAngles.y;
+            // t_knight.eulerAngles = v_euls;
+        }
+    }
 
     void ProcessLook()
     {
@@ -81,14 +98,22 @@ public class PlayerKnight : MonoBehaviour
 
     void OnJumpPressed()
     {
-        //Debug.Log("JUMP PRESSED");
-        
+        Debug.Log("JUMP PRESSED");
+        if (b_isGrounded)
+        {
+            //do something?
+        }
+        else
+        {
+            rb_knight.velocity = Vector3.zero;
+            rb_knight.AddForce(Vector3.down * f_slamForce);
+        }
     }
 
     void OnJumpReleased()
     {
         if (!b_isGrounded) return;
-        //Debug.Log("JUMP RELEASED");
+        Debug.Log("JUMP RELEASED");
         
         // foreach (ConfigurableJoint cj in cj_feet)
         // {
@@ -129,6 +154,7 @@ public class PlayerKnight : MonoBehaviour
 
     private void Update()
     {
+        ProcessMove();
         ProcessLook();
     }
 }
