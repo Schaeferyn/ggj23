@@ -10,6 +10,8 @@ public class PlayerKnight : MonoBehaviour
 
     [SerializeField] Rigidbody rb_knight;
     private Transform t_knight;
+    private ConfigurableJoint cj_knight;
+    private Quaternion q_knightStartRot;
     
     [SerializeField] private Animator anim_target;
     private bool b_isGrounded = false;
@@ -33,6 +35,8 @@ public class PlayerKnight : MonoBehaviour
         pInput = GetComponent<PlayerInput>();
         t_camera = Camera.main.transform;
         t_knight = rb_knight.transform;
+        q_knightStartRot = t_knight.localRotation;
+        cj_knight = rb_knight.GetComponent<ConfigurableJoint>();
         
         b_isInitialized = true;
     }
@@ -78,16 +82,15 @@ public class PlayerKnight : MonoBehaviour
     {
         if (v_moveInput.magnitude > 0.1f)
         {
+            if (!b_isInitialized) Initialize();
+            
+            //Debug.Log("rotating");
             Vector3 v_moveForceToAdd = (t_camera.forward * v_moveInput.y) + (t_camera.right * v_moveInput.x);
             v_moveForceToAdd.y = 0;
             
             t_selfRotator.LookAt(t_selfRotator.position + v_moveForceToAdd);
-            //t_knight.localRotation = Quaternion.Slerp(t_knight.localRotation, t_selfRotatorOffset.localRotation, 0.1f);
-            // t_knight.rotation = t_selfRotatorOffset.rotation;
 
-            // Vector3 v_euls = t_knight.eulerAngles;
-            // v_euls.y = t_selfRotatorOffset.eulerAngles.y;
-            // t_knight.eulerAngles = v_euls;
+            cj_knight.targetRotation = Quaternion.Inverse(t_selfRotatorOffset.rotation) * q_knightStartRot;
         }
     }
 
