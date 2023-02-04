@@ -15,12 +15,14 @@ public class PlayerKnight : MonoBehaviour
     private bool b_isGrounded = false;
     [SerializeField] private float f_jumpForce = 1000;
 
-    private Vector2 v_moveInput;
-    private Vector2 v_lookInput;
+    public Vector2 v_moveInput;
+    public Vector2 v_lookInput;
     [SerializeField] private JointController[] jc_feet;
     [SerializeField] private float f_moveForce = 1000;
 
     private Transform t_camera;
+    [SerializeField] private Transform t_camRotator;
+    [SerializeField] private float f_camRotateSpeed = 60.0f;
     
     void Initialize()
     {
@@ -58,21 +60,23 @@ public class PlayerKnight : MonoBehaviour
         else if (context.action.name == "Move")
         {
             v_moveInput = context.ReadValue<Vector2>();
+            //ProcessMove();
         }
         else if (context.action.name == "Look")
         {
             v_lookInput = context.ReadValue<Vector2>();
+            //ProcessLook();
         }
     }
 
-    void ProcessMove()
-    {
-        
-    }
+    // void ProcessMove()
+    // {
+    //     
+    // }
 
     void ProcessLook()
     {
-        
+        t_camRotator.Rotate(0, v_lookInput.x * f_camRotateSpeed * Time.deltaTime, 0);
     }
 
     void OnJumpPressed()
@@ -84,7 +88,7 @@ public class PlayerKnight : MonoBehaviour
     void OnJumpReleased()
     {
         if (!b_isGrounded) return;
-        Debug.Log("JUMP RELEASED");
+        //Debug.Log("JUMP RELEASED");
         
         // foreach (ConfigurableJoint cj in cj_feet)
         // {
@@ -99,11 +103,9 @@ public class PlayerKnight : MonoBehaviour
         }
         
         anim_target.SetTrigger("Jump");
-        
-        Vector3 v_moveForceToAdd = Vector3.one;
-        v_moveForceToAdd.x = v_moveInput.x;
+
+        Vector3 v_moveForceToAdd = (t_camera.forward * v_moveInput.y) + (t_camera.right * v_moveInput.x);
         v_moveForceToAdd.y = 0;
-        v_moveForceToAdd.z = v_moveInput.y;
         rb_knight.AddForce((Vector3.up * f_jumpForce) + (v_moveForceToAdd * f_moveForce));
         
         b_isGrounded = false;
@@ -123,5 +125,10 @@ public class PlayerKnight : MonoBehaviour
         //     cj.yMotion = ConfigurableJointMotion.Locked;
         //     cj.zMotion = ConfigurableJointMotion.Locked;
         // }
+    }
+
+    private void Update()
+    {
+        ProcessLook();
     }
 }
