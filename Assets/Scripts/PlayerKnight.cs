@@ -17,12 +17,16 @@ public class PlayerKnight : MonoBehaviour
 
     private Vector2 v_moveInput;
     private Vector2 v_lookInput;
-    [SerializeField] private ConfigurableJoint[] cj_feet;
     [SerializeField] private JointController[] jc_feet;
+    [SerializeField] private float f_moveForce = 1000;
+
+    private Transform t_camera;
     
     void Initialize()
     {
         pInput = GetComponent<PlayerInput>();
+        t_camera = Camera.main.transform;
+        
         b_isInitialized = true;
     }
 
@@ -95,7 +99,12 @@ public class PlayerKnight : MonoBehaviour
         }
         
         anim_target.SetTrigger("Jump");
-        rb_knight.AddForce(Vector3.up * f_jumpForce);
+        
+        Vector3 v_moveForceToAdd = Vector3.one;
+        v_moveForceToAdd.x = v_moveInput.x;
+        v_moveForceToAdd.y = 0;
+        v_moveForceToAdd.z = v_moveInput.y;
+        rb_knight.AddForce((Vector3.up * f_jumpForce) + (v_moveForceToAdd * f_moveForce));
         
         b_isGrounded = false;
     }

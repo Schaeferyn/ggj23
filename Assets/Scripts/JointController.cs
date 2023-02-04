@@ -52,7 +52,7 @@ public class JointController : MonoBehaviour
         if (b_isFoot && t_footAnchor && b_isAnchored)
         {
             //rb_this.Move(t_footAnchor.position, t_footAnchor.rotation);
-            rb_this.AddForce((t_footAnchor.position - t_this.position).normalized * f_anchorForce);
+            rb_this.AddForce((t_footAnchor.position - t_this.position) * f_anchorForce);
         }
     }
 
