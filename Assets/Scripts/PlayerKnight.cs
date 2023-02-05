@@ -29,6 +29,14 @@ public class PlayerKnight : MonoBehaviour
     [SerializeField] private Transform t_selfRotatorOffset;
 
     [SerializeField] private float f_slamForce = 3000;
+    private bool b_isSlamming = false;
+    
+    [SerializeField] Transform t_landingCircle;
+    private MeshRenderer mr_landingCircle;
+    private MaterialPropertyBlock mpb_landingCircle;
+    private Ray ray_landing;
+    private RaycastHit rh_landing;
+    [SerializeField] private LayerMask lm_landingCircle;
     
     void Initialize()
     {
@@ -37,7 +45,12 @@ public class PlayerKnight : MonoBehaviour
         t_knight = rb_knight.transform;
         q_knightStartRot = t_knight.localRotation;
         cj_knight = rb_knight.GetComponent<ConfigurableJoint>();
-        
+
+        mr_landingCircle = t_landingCircle.GetComponentInChildren<MeshRenderer>();
+        mr_landingCircle.enabled = false;
+        mpb_landingCircle = new MaterialPropertyBlock();
+        ray_landing = new Ray();
+
         b_isInitialized = true;
     }
 
@@ -99,24 +112,40 @@ public class PlayerKnight : MonoBehaviour
         t_camRotator.Rotate(0, v_lookInput.x * f_camRotateSpeed * Time.deltaTime, 0);
     }
 
+    void ProcessLandingCircle()
+    {
+        ray_landing.origin = t_knight.position;
+        ray_landing.direction = Vector3.down;
+
+        if (Physics.Raycast(ray_landing, out rh_landing, 100.0f, lm_landingCircle))
+        {
+            t_landingCircle.position = rh_landing.point + (rh_landing.normal * 0.1f);
+            t_landingCircle.rotation = Quaternion.LookRotation(rh_landing.normal);
+        }
+    }
+
     void OnJumpPressed()
     {
-        Debug.Log("JUMP PRESSED");
+        //Debug.Log("JUMP PRESSED");
         if (b_isGrounded)
         {
             //do something?
         }
-        else
+        else if(!b_isSlamming)
         {
             rb_knight.velocity = Vector3.zero;
             rb_knight.AddForce(Vector3.down * f_slamForce);
+            mpb_landingCircle.SetFloat("_IsAngry", 1);
+            mr_landingCircle.SetPropertyBlock(mpb_landingCircle);
+            
+            b_isSlamming = true;
         }
     }
 
     void OnJumpReleased()
     {
         if (!b_isGrounded) return;
-        Debug.Log("JUMP RELEASED");
+        //Debug.Log("JUMP RELEASED");
         
         // foreach (ConfigurableJoint cj in cj_feet)
         // {
@@ -135,6 +164,9 @@ public class PlayerKnight : MonoBehaviour
         Vector3 v_moveForceToAdd = (t_camera.forward * v_moveInput.y) + (t_camera.right * v_moveInput.x);
         v_moveForceToAdd.y = 0;
         rb_knight.AddForce((Vector3.up * f_jumpForce) + (v_moveForceToAdd * f_moveForce));
+        mr_landingCircle.enabled = true;
+        mpb_landingCircle.SetFloat("_IsAngry", 0);
+        mr_landingCircle.SetPropertyBlock(mpb_landingCircle);
         
         b_isGrounded = false;
     }
@@ -145,6 +177,8 @@ public class PlayerKnight : MonoBehaviour
         Debug.Log("Knight landed");
 
         b_isGrounded = true;
+        b_isSlamming = false;
+        mr_landingCircle.enabled = false;
         anim_target.SetTrigger("Land");
         
         // foreach (ConfigurableJoint cj in cj_feet)
@@ -159,5 +193,10 @@ public class PlayerKnight : MonoBehaviour
     {
         ProcessMove();
         ProcessLook();
+
+        if (!b_isGrounded)
+        {
+            ProcessLandingCircle();
+        }
     }
 }
